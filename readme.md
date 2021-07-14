@@ -1,5 +1,9 @@
 # Lul - Window manager
 
+## Screenshots
+
+![https://i.imgur.com/pxSuvx7.png][https://i.imgur.com/pxSuvx7.png]
+
 ## Development requirements
 
 - xorg-server-xephyr
