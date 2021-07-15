@@ -11,6 +11,12 @@ data SplitData = SplitData
   }
   deriving (Eq, Show)
 
+data StackSet a b = StackSet
+  { workspaces :: [Workspace a b]
+  , active     :: Int
+  , registered :: [a] }
+  deriving (Show, Eq)
+
 data Workspace a b = Workspace
   { windows :: Tree a b
   , focused :: Path}
@@ -46,6 +52,16 @@ fromList xs  arg = Branch
     firstHalf  = take (length xs `div` 2) xs
     secondHalf = drop (length xs `div` 2) xs
 
+toList :: Tree a b -> [a]
+toList Empty = []
+toList (Leaf a) = [a]
+toList (Branch l _ r) = toList l <> toList r
+
+append :: Tree a b -> b -> a -> Tree a b
+append Empty _ a = Leaf a
+append (Leaf l) b r = Branch (Leaf l) b (Leaf r)
+append (Branch l b1 r1) b2 r2 = Branch l b1 (Branch r1 b2 (Leaf r2))
+
 arrange :: Display -> Rectangle -> Tree Window SplitData -> IO ()
 arrange dpy (Rectangle x y w h) (Leaf win) = moveResizeWindow dpy win x y w h
 arrange dpy (Rectangle x y w h) (Branch l d r)
@@ -56,3 +72,30 @@ arrange dpy (Rectangle x y w h) (Branch l d r)
     arrange dpy (Rectangle x y w (h`div`2)) l
     arrange dpy (Rectangle x (y+fromIntegral (h`div`2)) w (h`div`2)) r
 arrange _ _ _ = return ()
+
+apply :: Display -> Rectangle -> StackSet Window SplitData -> IO ()
+apply dpy rect ss = do
+  mapM_ hide (hidden ss)
+  arrange dpy rect (windows (current ss))
+    where
+      hide :: Workspace Window SplitData -> IO ()
+      hide ws = mapM_ (\w -> moveWindow dpy w (-10000) (-10000)) (toList (windows ws))
+
+current :: StackSet a b -> Workspace a b
+current ss = workspaces ss!!active ss
+
+hidden :: StackSet a b -> [Workspace a b]
+hidden ss = l ++ r
+  where
+    l = take (active ss-1) $ workspaces ss
+    r = drop (active ss+1)   $ workspaces ss
+
+addToWorkspace :: Workspace a b -> b -> a -> Workspace a b
+addToWorkspace ws b a = ws {windows=append (windows ws) b a}
+
+addToCurrentSS :: StackSet a b -> b -> a -> StackSet a b
+addToCurrentSS ss b a = ss {workspaces=l<>[c]<>r}
+  where
+    l = take (active ss-1) $ workspaces ss
+    c = addToWorkspace (current ss) b a
+    r = drop (active ss+1)   $ workspaces ss
