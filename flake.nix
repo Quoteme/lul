@@ -28,13 +28,14 @@
             buildInputs = with pkgs; [
               (haskellPackages.ghcWithPackages myGHCPackages)
             ];
-            dontBuild = true;
-            # buildPhase = ''
-            #   ghc src/Main.hs -o lul
-            # '';
+            # dontBuild = true;
+            buildPhase = ''
+              ghc Main.hs Lul.hs -o lul
+            '';
             installPhase = ''
               mkdir -p $out/bin
-              ghc src/Main.hs -o $out/bin/lul
+              # ghc $src/Main.hs $src/Lul.hs -o lul
+              cp lul $out/bin
             '';
           };
         }
