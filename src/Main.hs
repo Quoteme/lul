@@ -12,6 +12,7 @@ import System.Exit
 
 main :: IO ()
 main = do
+  putStrLn "Starting Lul"
   initThreads
   dpy <- openDisplay ""
   root <- rootWindow dpy (defaultScreen dpy)
@@ -80,8 +81,8 @@ exit dpy = do
 
 autostart :: IO ()
 autostart = do
-  spawnProcess "/home/luca/.cabal/bin/lal" []
-  spawnCommand "setxkbmap de -variant nodeadkeys -option caps:swapescape"
+  -- spawnProcess "/home/luca/.cabal/bin/lal" []
+  -- spawnCommand "setxkbmap de -variant nodeadkeys -option caps:swapescape"
   -- spawnCommand "sudo bluetooth off"
   -- spawnCommand "/usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1"
   -- spawnCommand "redshift &"

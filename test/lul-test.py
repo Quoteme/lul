@@ -11,6 +11,7 @@ print('starting test display')
 
 with Display(visible=True) as disp:
 	print("test-display started")
+	print(current_dir+"/lul")
 	with EasyProcess([current_dir+"/lul"]) as proc:
 		proc.wait()
 # vim: tabstop=2 shiftwidth=2 noexpandtab ft=python

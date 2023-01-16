@@ -38,6 +38,25 @@
               cp lul $out/bin
             '';
           };
+          packages.lul-test = pkgs.stdenv.mkDerivation {
+            name = "lul-test";
+            src = ./test;
+            version = "1.0";
+            buildInputs = [
+              packages.lul
+              (pkgs.python310.withPackages (ps: with ps; [
+                PyVirtualDisplay
+              ]))
+            ];
+            dontBuild = true;
+            installPhase = ''
+            mkdir -p $out/bin
+            cp $src/* $out/bin/
+            ln -sf ${packages.lul}/bin/lul $out/bin/lul
+            chmod +x $out/bin/lul-test.py
+            mv $out/bin/lul-test.py $out/bin/lul-test
+            '';
+          };
         }
       );
 }
