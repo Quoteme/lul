@@ -14,4 +14,4 @@ prettyPrintTree (Branch l b r) indent = replicate indent ' ' <> "🌳\n"
                                       <> prettyPrintTree r (indent+1)
 
 prettyPrintStackSet :: (Show a, Show b) => StackSet a b -> String
-prettyPrintStackSet (StackSet ws active _) = "🌲\n" <> prettyPrintTree (windows (ws !! active)) 1
+prettyPrintStackSet (StackSet ws active _ _) = "🌲\n" <> prettyPrintTree (windows (ws !! active)) 1

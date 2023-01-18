@@ -14,7 +14,9 @@ import Data.Bits ((.|.))
 data StackSet a b = StackSet
   { workspaces :: [Workspace a b]
   , active     :: Int
-  , registeredWindows :: [a] }
+  , registeredWindows :: [a]
+  , borderSize :: Int
+  }
   deriving (Show, Eq)
 
 data Workspace a b = Workspace

@@ -29,7 +29,7 @@ main = do
                        .|. enterWindowMask
                        .|. substructureNotifyMask)
   autostart >> (print =<< queryTree dpy root) >> print "*********"
-  let ss = StackSet [Workspace Empty Nothing] 0 []
+  let ss = StackSet [Workspace Empty Nothing] 0 [] 2
   let sd = SplitData 0.5 Horizontal
   loop dpy ss sd
 
@@ -75,6 +75,11 @@ loop dpy ss sd = do
             let newss = handleFocusChange ss (ev_window ev)
             decorateStackSet dpy newss
             return newss
+      ;
+      "ConfigureNotify" -> do
+        putStrLn $ format "ConfigureNotify| event: {0}" [show (ev)]
+        putStrLn $ format "ConfigureNotify| dpy: {0}" [show (dpy)]
+        return ss
       ;
       _ -> do
         print . eventName $ ev
