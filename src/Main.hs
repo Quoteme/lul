@@ -48,8 +48,7 @@ loop dpy ss sd = do
         return ss
       ;
       "KeyPress" -> do
-        handleKeyPress =<< get_KeyEvent e
-        return ss
+        handleKeyPress ss =<< get_KeyEvent e
       ;
       "KeyRelease" -> do
         putStrLn $ prettyPrintStackSet ss
@@ -62,7 +61,8 @@ loop dpy ss sd = do
         return newss
       ;
       "DestroyNotify" -> do
-        print ev
+        putStrLn . show $ ev
+        putStrLn . show $ ss
         let closdeWindow = ev_window ev
         let newss = balanceCurrentSS $ removeFromCurrentSS ss closdeWindow
         apply dpy screenRect newss
@@ -82,13 +82,16 @@ loop dpy ss sd = do
     screenRect = Rectangle 0 15
       (fromIntegral (displayWidth  dpy (defaultScreen dpy)))
       (fromIntegral (displayHeight dpy (defaultScreen dpy)))
-    handleKeyPress :: XKeyEvent -> IO ()
-    handleKeyPress k@(win,root,time,x,y,wx,wy,mod,keycode,_)
-      | keycode==36 && mod==8 = void $ spawnProcess "st" []
-      | keycode==24 && mod==8 = exit dpy
+    handleKeyPress :: StackSet Window SplitData -> XKeyEvent -> IO (StackSet Window SplitData)
+    handleKeyPress ss k@(win,root,time,x,y,wx,wy,mod,keycode,_)
+      | keycode==36 && mod==8 = spawnProcess "st" [] >> return ss
+      | keycode==24 && mod==8 = exit dpy >> return ss
+      | keycode==27 && mod==8 = do
+        let newss = rotateSSaroundFocused 1 ss
+        apply dpy screenRect newss
+        return newss
       | otherwise = do
-          print k
-          return ()
+          return ss
     handleButtonPress :: XButtonEvent -> IO ()
     handleButtonPress (win,root,time,x,y,wx,wy,mod,btn,_)
       | win/=root = raiseWindow dpy win

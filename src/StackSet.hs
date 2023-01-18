@@ -148,8 +148,8 @@ decorateStackSet dpy ss = do
 
 -- | Change the rotation of the window tree for the `n-th` parent of the 
 -- focused window.
-rotate :: Int -> StackSet Window SplitData -> StackSet Window SplitData
-rotate n ss = ss {workspaces=l<>[c]<>r}
+rotateSSaroundFocused :: Int -> StackSet Window SplitData -> StackSet Window SplitData
+rotateSSaroundFocused n ss = ss {workspaces=l<>[c]<>r}
   where
     l = take (active ss-1) $ workspaces ss
     c = rotateWorkspace n (current ss)
