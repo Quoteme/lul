@@ -9,6 +9,7 @@ import Graphics.X11.Xlib.Extras
 import WindowDecoration
 import Data.Bifoldable
 import Data.Maybe (fromJust)
+import Data.Bits ((.|.))
 
 data StackSet a b = StackSet
   { workspaces :: [Workspace a b]
@@ -33,7 +34,7 @@ handleNewWindows dpy root ss sd = do
   (_,_,children) <- queryTree dpy root
   let newwin = children \\ registeredWindows ss
   mapM_ (\win -> do
-    selectInput dpy win (enterWindowMask)
+    selectInput dpy win (enterWindowMask .|. keyPressMask)
     return ()
     ) newwin
   mapM_ (decorateWin dpy "black") newwin
