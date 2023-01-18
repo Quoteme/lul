@@ -29,6 +29,9 @@ data Path
   deriving (Eq, Show)
 
 
+-- | This method is called, whenever a new window is created. It will
+-- map the window, add it to the registered windows and then
+-- automatically add it to the current workspace.
 handleNewWindows :: Display -> Window -> StackSet Window SplitData -> SplitData -> IO (StackSet Window SplitData)
 handleNewWindows dpy root ss sd = do
   (_,_,children) <- queryTree dpy root
@@ -129,6 +132,9 @@ balanceCurrentSS ss = ss {workspaces=l<>[c]<>r}
     c = balanceWorkspace (current ss)
     r = drop (active ss+1)   $ workspaces ss
 
+-- | set the border colors of the windows in the active workspace.
+-- This is primarily done, when the focus changes, so the active window
+-- gets a different border color.
 decorateStackSet :: Display -> StackSet Window SplitData -> IO ()
 decorateStackSet dpy ss = do
   case focused (current ss) of
@@ -139,3 +145,19 @@ decorateStackSet dpy ss = do
                      False -> decorateWin dpy "black" win
         ) (\_ -> return ()) (windows (current ss))
     Nothing  -> return ()
+
+-- | Change the rotation of the window tree for the `n-th` parent of the 
+-- focused window.
+rotate :: Int -> StackSet Window SplitData -> StackSet Window SplitData
+rotate n ss = ss {workspaces=l<>[c]<>r}
+  where
+    l = take (active ss-1) $ workspaces ss
+    c = rotateWorkspace n (current ss)
+    r = drop (active ss+1)   $ workspaces ss
+
+-- | Change the rotation of the window tree for the `n-th` parent
+-- of the focused window in a workspace.
+rotateWorkspace :: Int -> Workspace Window SplitData -> Workspace Window SplitData
+rotateWorkspace n ws = case focused ws of
+  Just win -> ws {windows=rotateTree (windows ws) n win}
+  Nothing  -> ws

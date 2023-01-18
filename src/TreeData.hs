@@ -8,3 +8,8 @@ data SplitData = SplitData
   , orientation :: Orientation
   }
   deriving (Eq, Show)
+
+rotateSplit :: SplitData -> SplitData
+rotateSplit (SplitData r o)
+  | o == Horizontal = SplitData r Vertical
+  | o == Vertical   = SplitData r Horizontal

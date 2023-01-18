@@ -87,7 +87,7 @@ loop dpy ss sd = do
       | keycode==36 && mod==8 = void $ spawnProcess "st" []
       | keycode==24 && mod==8 = exit dpy
       | otherwise = do
-          -- print k
+          print k
           return ()
     handleButtonPress :: XButtonEvent -> IO ()
     handleButtonPress (win,root,time,x,y,wx,wy,mod,btn,_)

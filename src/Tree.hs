@@ -1,8 +1,11 @@
 module Tree where
 
+import Prelude hiding (Left, Right)
 import TreeData
 import Data.Bifunctor
 import Data.Bifoldable
+import Path
+import Data.Maybe (isJust, fromJust)
 
 data Tree a b
   = Branch (Tree a b) b (Tree a b)
@@ -63,3 +66,31 @@ balance (Branch l b r) = Branch (balance l) b (balance r)
 removeAll :: (Eq a) => Tree a b -> [a] -> Tree a b
 removeAll t [] = t
 removeAll t (x:xs) = removeAll (remove t x) xs
+
+-- get the path to a node in a tree
+pathTo :: (Eq a) => Tree a b -> a -> Maybe Path
+pathTo Empty _ = Nothing
+pathTo (Leaf a) a'
+  | a==a' = Just $ Path []
+  | otherwise = Nothing
+pathTo (Branch l _ r) a
+  | isJust leftPath = Just $ (Path [Left] <> fromJust leftPath)
+  | isJust rightPath = Just $ (Path [Right] <> fromJust rightPath)
+  | otherwise = Nothing
+  where
+    leftPath = pathTo l a
+    rightPath = pathTo r a
+
+-- | rotate the `n-th` parent of a leaf in a tree
+rotateTree :: (Eq a) => Tree a SplitData -> Int -> a -> Tree a SplitData
+rotateTree t n a = case pathTo t a of
+  Nothing -> t
+  Just p@(Path v) -> rotateTree' t (length v - n) p
+  where
+    rotateTree' :: Tree a SplitData -> Int -> Path -> Tree a SplitData
+    rotateTree' Empty 0 _ = Empty
+    rotateTree' (Leaf a) 0 _ = Leaf a
+    rotateTree' (Branch l b r) 0 _ = Branch r (rotateSplit b) l
+    rotateTree' t _ (Path []) = t
+    rotateTree' (Branch l b r) n (Path (Left:ps)) = Branch (rotateTree' l (n-1) (Path ps)) b r
+    rotateTree' (Branch l b r) n (Path (Right:ps)) = Branch l b (rotateTree' r (n-1) (Path ps))
