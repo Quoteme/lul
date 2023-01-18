@@ -9,6 +9,8 @@ import Data.List ((\\))
 import Control.Concurrent
 import System.Process (spawnProcess, spawnCommand)
 import System.Exit
+import Text.Format (format)
+import Debug
 
 main :: IO ()
 main = do
@@ -40,7 +42,8 @@ loop dpy ss sd = do
     when (eventName ev=="DestroyNotify") (removeObsoleteWin (ev_window ev))
     (focused,_) <- getInputFocus dpy
     -- print $ "FOCUSED"++show focused
-    print "--- awaiting event ---"
+    -- print "--- awaiting event ---"
+    return ()
   newss <- updateStackSet root ss
   loop dpy newss sd
   where
@@ -51,7 +54,9 @@ loop dpy ss sd = do
     handleKeyPress k@(win,root,time,x,y,wx,wy,mod,keycode,_)
       | keycode==36 && mod==8 = void $ spawnProcess "st" []
       | keycode==24 && mod==8 = exit dpy
-      | otherwise = print k
+      | otherwise = do
+          -- print k
+          return ()
     handleButtonPress :: XButtonEvent -> IO ()
     handleButtonPress (win,root,time,x,y,wx,wy,mod,btn,_)
       | win/=root = raiseWindow dpy win
@@ -63,10 +68,14 @@ loop dpy ss sd = do
       setWindowBorderWidth dpy win 2
     updateStackSet :: Window -> StackSet Window SplitData -> IO (StackSet Window SplitData)
     updateStackSet root ss = do
-      (v,w,children) <- queryTree dpy root
-      let newwin = drop 1 $ children \\ registered ss
+      -- print $ format "updateStackSet| root: {0}, ss: {1}" [show root, show ss]
+      putStrLn $ prettyPrintStackSet ss
+      (_,_,children) <- queryTree dpy root
+      let newwin = children \\ registered ss
       mapM_ decorateWin newwin
       let newss  = foldl (`addToCurrentSS` sd) ss newwin
+      print $ format "updateStackSet| children: {0}" [show children]
+      putStrLn $ prettyPrintStackSet newss
       return (newss {registered=registered ss ++ newwin})
     removeObsoleteWin :: Window -> IO ()
     removeObsoleteWin win = print win

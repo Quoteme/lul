@@ -15,6 +15,7 @@
         pkgs = import nixpkgs { inherit system; };
         myGHCPackages = (hpkgs: with hpkgs; [
           X11
+          text-format-simple
           ]);
       in
         rec {
@@ -30,7 +31,7 @@
             ];
             # dontBuild = true;
             buildPhase = ''
-              ghc Main.hs Lul.hs -o lul
+              ghc Main.hs Lul.hs Tree.hs Debug.hs -o lul
             '';
             installPhase = ''
               mkdir -p $out/bin
