@@ -29,6 +29,8 @@ main = do
   let sd = SplitData 0.5 Horizontal
   loop dpy ss sd
 
+-- | Call this function indefinitely. It will wait for a new event to
+-- occur and then it will rerun itself.
 loop :: Display -> StackSet Window SplitData -> SplitData -> IO ()
 loop dpy ss sd = do
   root <- rootWindow dpy (defaultScreen dpy)
@@ -51,7 +53,6 @@ loop dpy ss sd = do
         return ss
       ;
       "CreateNotify" -> do
-        putStrLn "CreateNotify"
         newss <- updateStackSet root ss
         apply dpy screenRect newss
         return newss
@@ -70,14 +71,6 @@ loop dpy ss sd = do
         print . eventName $ ev
         return ss
      }
-    -- when (eventName ev=="ButtonPress") (handleButtonPress =<< get_ButtonEvent e)
-    -- when (eventName ev=="KeyPress") (handleKeyPress =<< get_KeyEvent e)
-    -- when (eventName ev=="CreateNotify") (updateStackSet root ss >>= apply dpy screenRect)
-    -- when (eventName ev=="DestroyNotify") (removeObsoleteWin (ev_window ev))
-    -- print $ "FOCUSED"++show focused
-    -- print "--- awaiting event ---"
-    -- return ()
-  -- newss <- updateStackSet root ss
   loop dpy newss sd
   where
     screenRect = Rectangle 0 15
@@ -111,8 +104,6 @@ loop dpy ss sd = do
       print $ format "updateStackSet| children: {0}" [show children]
       putStrLn $ prettyPrintStackSet newss
       return (newss {registeredWindows=registeredWindows ss ++ newwin})
-    removeObsoleteWin :: Window -> IO ()
-    removeObsoleteWin win = print win
 
 exit :: Display -> IO ()
 exit dpy = do
