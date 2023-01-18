@@ -23,13 +23,6 @@ data Path
   deriving (Eq, Show)
 
 
-getFocused :: Tree a b -> Path -> Maybe a
-getFocused (Leaf w)        EndPath      = Just w
-getFocused (Leaf w)        _            = Nothing
-getFocused (Branch l _ r) (LeftPath p)  = getFocused l p
-getFocused (Branch l _ r) (RightPath p) = getFocused r p
-getFocused _ _                          = Nothing
-
 -- | Given the display, its size as a rectangle and a Binary tree of
 -- windows and their data on how to split, show this on screen.
 arrange :: Display -> Rectangle -> Tree Window SplitData -> IO ()
