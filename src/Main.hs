@@ -53,7 +53,7 @@ loop dpy ss sd = do
       "CreateNotify" -> do
         putStrLn "CreateNotify"
         newss <- updateStackSet root ss
-        apply dpy screenRect ss
+        apply dpy screenRect newss
         return newss
       ;
       "DestroyNotify" -> do
