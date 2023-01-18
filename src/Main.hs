@@ -43,6 +43,7 @@ loop dpy ss sd = do
     nextEvent dpy e
     ev <- getEvent e
     (focused,_) <- getInputFocus dpy
+    putStrLn $ format "Focused: {0}" [show focused]
     case (eventName ev) of{  
       "ButtonPress" -> do
         handleButtonPress =<< get_ButtonEvent e
@@ -58,7 +59,7 @@ loop dpy ss sd = do
       ;
       "CreateNotify" -> do
         putStrLn $ format "CreateNotify| event: {0}" [show (ev)]
-        newss <- handleNewWindows root ss
+        newss <- handleNewWindows dpy root ss sd
         apply dpy screenRect newss
         return newss
       ;
@@ -89,15 +90,6 @@ loop dpy ss sd = do
     handleButtonPress (win,root,time,x,y,wx,wy,mod,btn,_)
       | win/=root = raiseWindow dpy win
       | otherwise = print btn
-    handleNewWindows :: Window -> StackSet Window SplitData -> IO (StackSet Window SplitData)
-    handleNewWindows root ss = do
-      putStrLn $ prettyPrintStackSet ss
-      (_,_,children) <- queryTree dpy root
-      let newwin = children \\ registeredWindows ss
-      mapM_ (decorateWin dpy) newwin
-      let newss  = foldl (`addToCurrentSS` sd) ss newwin
-      putStrLn $ prettyPrintStackSet newss
-      return (newss {registeredWindows=registeredWindows ss ++ newwin})
 
 exit :: Display -> IO ()
 exit dpy = do

@@ -1,9 +1,12 @@
 module StackSet where
 
+import Data.List ((\\))
 import Tree
 import TreeData
 import Graphics.X11.Xlib
 import Text.Format (format)
+import Graphics.X11.Xlib.Extras
+import WindowDecoration
 
 data StackSet a b = StackSet
   { workspaces :: [Workspace a b]
@@ -22,6 +25,14 @@ data Path
   | EndPath
   deriving (Eq, Show)
 
+
+handleNewWindows :: Display -> Window -> StackSet Window SplitData -> SplitData -> IO (StackSet Window SplitData)
+handleNewWindows dpy root ss sd = do
+  (_,_,children) <- queryTree dpy root
+  let newwin = children \\ registeredWindows ss
+  mapM_ (decorateWin dpy) newwin
+  let newss  = foldl (`addToCurrentSS` sd) ss newwin
+  return (newss {registeredWindows=registeredWindows ss ++ newwin})
 
 -- | Given the display, its size as a rectangle and a Binary tree of
 -- windows and their data on how to split, show this on screen.
