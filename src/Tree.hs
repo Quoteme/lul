@@ -1,12 +1,23 @@
 module Tree where
 
 import TreeData
+import Data.Bifunctor
 
 data Tree a b
   = Branch (Tree a b) b (Tree a b)
   | Leaf a
   | Empty
   deriving (Eq, Show)
+
+instance Bifunctor Tree where
+  bimap f g (Branch l d r) = Branch (bimap f g l) (g d) (bimap f g r)
+  bimap f _ (Leaf a) = Leaf (f a)
+  bimap _ _ Empty = Empty
+
+instance Bifoldable Tree where
+  bifoldMap f g (Branch l d r) = bifoldMap f g l <> g d <> bifoldMap f g r
+  bifoldMap f _ (Leaf a) = f a
+  bifoldMap _ _ Empty = mempty
 
 -- | Create a simple tree from a list
 fromList :: [a] -> b -> Tree a b
