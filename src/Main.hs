@@ -14,6 +14,7 @@ import Debug
 import Tree
 import TreeData
 import StackSet
+import WindowDecoration
 
 main :: IO ()
 main = do
@@ -25,6 +26,7 @@ main = do
                        .|. keyPressMask
                        .|. keyReleaseMask
                        .|. structureNotifyMask
+                       .|. enterWindowMask
                        .|. substructureNotifyMask)
   autostart >> (print =<< queryTree dpy root) >> print "*********"
   let ss = StackSet [Workspace Empty EndPath] 0 []
@@ -55,7 +57,8 @@ loop dpy ss sd = do
         return ss
       ;
       "CreateNotify" -> do
-        newss <- updateStackSet root ss
+        putStrLn $ format "CreateNotify| event: {0}" [show (ev)]
+        newss <- handleNewWindows root ss
         apply dpy screenRect newss
         return newss
       ;
@@ -65,9 +68,6 @@ loop dpy ss sd = do
         let newss = balanceCurrentSS $ removeFromCurrentSS ss closdeWindow
         apply dpy screenRect newss
         return newss
-        -- newss <- updateStackSet root ss
-        -- apply dpy screenRect ss
-        -- return ss
       ;
       _ -> do
         print . eventName $ ev
@@ -89,21 +89,13 @@ loop dpy ss sd = do
     handleButtonPress (win,root,time,x,y,wx,wy,mod,btn,_)
       | win/=root = raiseWindow dpy win
       | otherwise = print btn
-    decorateWin :: Window -> IO ()
-    decorateWin win = do
-      borderColor <- initColor dpy "red"
-      setWindowBorder dpy win borderColor
-      setWindowBorderWidth dpy win 2
-    updateStackSet :: Window -> StackSet Window SplitData -> IO (StackSet Window SplitData)
-    updateStackSet root ss = do
-      -- print $ format "updateStackSet| root: {0}, ss: {1}" [show root, show ss]
+    handleNewWindows :: Window -> StackSet Window SplitData -> IO (StackSet Window SplitData)
+    handleNewWindows root ss = do
       putStrLn $ prettyPrintStackSet ss
       (_,_,children) <- queryTree dpy root
       let newwin = children \\ registeredWindows ss
-      putStrLn $ format "updateStackSet| newwin: {0}" [show newwin]
-      mapM_ decorateWin newwin
+      mapM_ (decorateWin dpy) newwin
       let newss  = foldl (`addToCurrentSS` sd) ss newwin
-      print $ format "updateStackSet| children: {0}" [show children]
       putStrLn $ prettyPrintStackSet newss
       return (newss {registeredWindows=registeredWindows ss ++ newwin})
 
@@ -126,9 +118,3 @@ autostart = do
   -- spawnCommand "picom &"
   -- spawnProcess "st" []
   return ()
-
-initColor :: Display -> String -> IO Pixel
-initColor dpy color = do
-  let colormap = defaultColormap dpy (defaultScreen dpy)
-  (apros,real) <- allocNamedColor dpy colormap color
-  return $ color_pixel apros

@@ -1,9 +1,9 @@
 module StackSet where
 
-import Graphics.X11.Xlib
-import Text.Format (format)
 import Tree
 import TreeData
+import Graphics.X11.Xlib
+import Text.Format (format)
 
 data StackSet a b = StackSet
   { workspaces :: [Workspace a b]
