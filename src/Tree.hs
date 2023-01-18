@@ -2,6 +2,7 @@ module Tree where
 
 import TreeData
 import Data.Bifunctor
+import Data.Bifoldable
 
 data Tree a b
   = Branch (Tree a b) b (Tree a b)

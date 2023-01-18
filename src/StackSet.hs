@@ -7,6 +7,7 @@ import Graphics.X11.Xlib
 import Text.Format (format)
 import Graphics.X11.Xlib.Extras
 import WindowDecoration
+import Data.Bifoldable
 
 data StackSet a b = StackSet
   { workspaces :: [Workspace a b]
@@ -30,7 +31,7 @@ handleNewWindows :: Display -> Window -> StackSet Window SplitData -> SplitData 
 handleNewWindows dpy root ss sd = do
   (_,_,children) <- queryTree dpy root
   let newwin = children \\ registeredWindows ss
-  mapM_ (decorateWin dpy) newwin
+  mapM_ (decorateWin dpy "black") newwin
   let newss  = foldl (`addToCurrentSS` sd) ss newwin
   return (newss {registeredWindows=registeredWindows ss ++ newwin})
 
@@ -112,3 +113,16 @@ balanceCurrentSS ss = ss {workspaces=l<>[c]<>r}
     l = take (active ss-1) $ workspaces ss
     c = balanceWorkspace (current ss)
     r = drop (active ss+1)   $ workspaces ss
+
+-- | decorate the windows in a stackset
+-- This primarily changes the border color of the focused window to red
+-- and the border color of the unfocused windows to black
+decorateStackSet :: Display -> StackSet Window SplitData -> IO (StackSet Window SplitData)
+decorateStackSet dpy ss = do
+  (focused,_) <- getInputFocus dpy
+  putStrLn $ "focused: " ++ show focused
+  bimapM_ (\win -> case win == focused of
+                     True  -> decorateWin dpy "red" win
+                     False -> decorateWin dpy "black" win
+    ) (\_ -> return ()) (windows (current ss))
+  return ss

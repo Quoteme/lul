@@ -1,9 +1,9 @@
 module WindowDecoration where
 import Graphics.X11
 
-decorateWin :: Display -> Window -> IO ()
-decorateWin dpy win = do
-  borderColor <- initColor dpy "red"
+decorateWin :: Display -> String -> Window -> IO ()
+decorateWin dpy color win  = do
+  borderColor <- initColor dpy color
   setWindowBorder dpy win borderColor
   setWindowBorderWidth dpy win 2
 
