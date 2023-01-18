@@ -11,6 +11,7 @@ import System.Process (spawnProcess, spawnCommand)
 import System.Exit
 import Text.Format (format)
 import Debug
+import Tree
 
 main :: IO ()
 main = do
