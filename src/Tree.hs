@@ -1,5 +1,7 @@
 module Tree where
 
+import TreeData
+
 data Tree a b
   = Branch (Tree a b) b (Tree a b)
   | Leaf a

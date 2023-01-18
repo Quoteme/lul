@@ -12,6 +12,8 @@ import System.Exit
 import Text.Format (format)
 import Debug
 import Tree
+import TreeData
+import StackSet
 
 main :: IO ()
 main = do
@@ -60,7 +62,7 @@ loop dpy ss sd = do
       "DestroyNotify" -> do
         print ev
         let closdeWindow = ev_window ev
-        newss <- updateStackSet root $ balanceCurrentSS $ removeFromCurrentSS ss closdeWindow
+        let newss = balanceCurrentSS $ removeFromCurrentSS ss closdeWindow
         apply dpy screenRect newss
         return newss
         -- newss <- updateStackSet root ss

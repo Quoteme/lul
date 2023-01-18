@@ -1,7 +1,9 @@
 module Debug where
+
+import Text.Format
 import Lul
 import Tree
-import Text.Format
+import StackSet
 
 prettyPrintTree :: Show a => Tree a b -> Int -> String
 prettyPrintTree Empty indent = replicate indent ' ' <> "🪹"
