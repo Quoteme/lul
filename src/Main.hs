@@ -2,7 +2,7 @@ module Main where
 
 import Lul
 import Graphics.X11.Xlib
-import Graphics.X11.Xlib.Extras (getEvent, eventName, queryTree, killClient, setEventType, ev_window)
+import Graphics.X11.Xlib.Extras (getEvent, eventName, queryTree, killClient, setEventType, ev_window, ev_root)
 import Data.Bits ((.|.))
 import Control.Monad (when, void)
 import Data.List ((\\))
@@ -69,9 +69,12 @@ loop dpy ss sd = do
         return newss
       ;
       "EnterNotify" -> do
-        let newss = handleFocusChange ss (ev_window ev)
-        decorateStackSet dpy newss
-        return newss
+        case (ev_window ev == ev_root ev) of
+          True -> return ss
+          False -> do
+            let newss = handleFocusChange ss (ev_window ev)
+            decorateStackSet dpy newss
+            return newss
       ;
       _ -> do
         print . eventName $ ev
