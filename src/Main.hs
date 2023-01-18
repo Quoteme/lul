@@ -2,7 +2,7 @@ module Main where
 
 import Lul
 import Graphics.X11.Xlib
-import Graphics.X11.Xlib.Extras (getEvent, eventName, queryTree, killClient, setEventType, ev_window, ev_root)
+import Graphics.X11.Xlib.Extras (getEvent, eventName, queryTree, killClient, setEventType, ev_window, ev_root, mapRaised)
 import Data.Bits ((.|.))
 import Control.Monad (when, void)
 import Data.List ((\\))
@@ -72,6 +72,7 @@ loop dpy ss sd = do
         case (ev_window ev == ev_root ev) of
           True -> return ss
           False -> do
+            mapRaised dpy (ev_window ev)
             let newss = handleFocusChange ss (ev_window ev)
             decorateStackSet dpy newss
             return newss
