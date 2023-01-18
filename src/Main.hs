@@ -32,20 +32,52 @@ main = do
 loop :: Display -> StackSet Window SplitData -> SplitData -> IO ()
 loop dpy ss sd = do
   root <- rootWindow dpy (defaultScreen dpy)
-  allocaXEvent $ \e -> do
+  newss <- allocaXEvent $ \e -> do
     -- sync dpy False
     nextEvent dpy e
     ev <- getEvent e
-    print . eventName $ ev
-    when (eventName ev=="ButtonPress") (handleButtonPress =<< get_ButtonEvent e)
-    when (eventName ev=="KeyPress") (handleKeyPress =<< get_KeyEvent e)
-    when (eventName ev=="CreateNotify") (updateStackSet root ss >>= apply dpy screenRect)
-    when (eventName ev=="DestroyNotify") (removeObsoleteWin (ev_window ev))
     (focused,_) <- getInputFocus dpy
+    case (eventName ev) of{  
+      "ButtonPress" -> do
+        handleButtonPress =<< get_ButtonEvent e
+        return ss
+      ;
+      "KeyPress" -> do
+        handleKeyPress =<< get_KeyEvent e
+        return ss
+      ;
+      "KeyRelease" -> do
+        putStrLn $ prettyPrintStackSet ss
+        return ss
+      ;
+      "CreateNotify" -> do
+        putStrLn "CreateNotify"
+        newss <- updateStackSet root ss
+        apply dpy screenRect ss
+        return newss
+      ;
+      "DestroyNotify" -> do
+        print ev
+        let closdeWindow = ev_window ev
+        newss <- updateStackSet root $ balanceCurrentSS $ removeFromCurrentSS ss closdeWindow
+        apply dpy screenRect newss
+        return newss
+        -- newss <- updateStackSet root ss
+        -- apply dpy screenRect ss
+        -- return ss
+      ;
+      _ -> do
+        print . eventName $ ev
+        return ss
+     }
+    -- when (eventName ev=="ButtonPress") (handleButtonPress =<< get_ButtonEvent e)
+    -- when (eventName ev=="KeyPress") (handleKeyPress =<< get_KeyEvent e)
+    -- when (eventName ev=="CreateNotify") (updateStackSet root ss >>= apply dpy screenRect)
+    -- when (eventName ev=="DestroyNotify") (removeObsoleteWin (ev_window ev))
     -- print $ "FOCUSED"++show focused
     -- print "--- awaiting event ---"
-    return ()
-  newss <- updateStackSet root ss
+    -- return ()
+  -- newss <- updateStackSet root ss
   loop dpy newss sd
   where
     screenRect = Rectangle 0 15
@@ -72,12 +104,13 @@ loop dpy ss sd = do
       -- print $ format "updateStackSet| root: {0}, ss: {1}" [show root, show ss]
       putStrLn $ prettyPrintStackSet ss
       (_,_,children) <- queryTree dpy root
-      let newwin = children \\ registered ss
+      let newwin = children \\ registeredWindows ss
+      putStrLn $ format "updateStackSet| newwin: {0}" [show newwin]
       mapM_ decorateWin newwin
       let newss  = foldl (`addToCurrentSS` sd) ss newwin
       print $ format "updateStackSet| children: {0}" [show children]
       putStrLn $ prettyPrintStackSet newss
-      return (newss {registered=registered ss ++ newwin})
+      return (newss {registeredWindows=registeredWindows ss ++ newwin})
     removeObsoleteWin :: Window -> IO ()
     removeObsoleteWin win = print win
 

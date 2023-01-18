@@ -16,7 +16,7 @@ data SplitData = SplitData
 data StackSet a b = StackSet
   { workspaces :: [Workspace a b]
   , active     :: Int
-  , registered :: [a] }
+  , registeredWindows :: [a] }
   deriving (Show, Eq)
 
 data Workspace a b = Workspace
@@ -36,33 +36,6 @@ getFocused (Leaf w)        _            = Nothing
 getFocused (Branch l _ r) (LeftPath p)  = getFocused l p
 getFocused (Branch l _ r) (RightPath p) = getFocused r p
 getFocused _ _                          = Nothing
-
-fromList :: [a] -> b -> Tree a b
-fromList []  _   = Empty
-fromList [x] _   = Leaf x
-fromList xs  arg = Branch
-  (fromList firstHalf arg)
-  arg
-  (fromList secondHalf arg)
-  where
-    firstHalf  = take (length xs `div` 2) xs
-    secondHalf = drop (length xs `div` 2) xs
-
-toList :: Tree a b -> [a]
-toList Empty = []
-toList (Leaf a) = [a]
-toList (Branch l _ r) = toList l <> toList r
-
-append :: Tree a b -> b -> a -> Tree a b
-append Empty _ a = Leaf a
-append (Leaf l) b r = Branch (Leaf l) b (Leaf r)
-append (Branch l b1 r1) b2 r2 = Branch l b1 (Branch r1 b2 (Leaf r2))
-
-remove :: (Eq a) => Tree a b -> a -> Tree a b
-remove Empty _ = Empty
-remove (Leaf a) a' | a==a' = Empty
-remove (Leaf a) a' | a/=a' = Leaf a
-remove (Branch l b r) a = Branch (remove l a) b (remove r a)
 
 -- | Given the display, its size as a rectangle and a Binary tree of
 -- windows and their data on how to split, show this on screen.
@@ -109,10 +82,36 @@ hidden ss = l ++ r
 addToWorkspace :: Workspace a b -> b -> a -> Workspace a b
 addToWorkspace ws b a = ws {windows=append (windows ws) b a}
 
--- | add a Workspace that contains leafs of type `a` and nodes between them of type `b`
+-- | add a window to the active workspace of a stackset
 addToCurrentSS :: StackSet a b -> b -> a -> StackSet a b
 addToCurrentSS ss b a = ss {workspaces=l<>[c]<>r}
   where
     l = take (active ss-1) $ workspaces ss
     c = addToWorkspace (current ss) b a
+    r = drop (active ss+1)   $ workspaces ss
+
+-- | delete a window from a workspace
+removeFromWorkspace :: (Eq a) => Workspace a b -> a -> Workspace a b
+removeFromWorkspace ws win = ws {windows=remove (windows ws) win}
+
+-- | delete a window from the active workspace of a stackset
+removeFromCurrentSS :: (Eq a) => StackSet a b -> a -> StackSet a b
+removeFromCurrentSS ss win = ss
+  { workspaces=l<>[c]<>r,
+  registeredWindows = filter (/=win) (registeredWindows ss)}
+  where
+    l = take (active ss-1) $ workspaces ss
+    c = removeFromWorkspace (current ss) win
+    r = drop (active ss+1)   $ workspaces ss
+
+-- | balance the windowtree in a workspace
+balanceWorkspace :: Workspace a b -> Workspace a b
+balanceWorkspace ws = ws {windows=balance (windows ws)}
+
+-- | balance the windowtree in the active workspace of a stackset
+balanceCurrentSS :: StackSet a b -> StackSet a b
+balanceCurrentSS ss = ss {workspaces=l<>[c]<>r}
+  where
+    l = take (active ss-1) $ workspaces ss
+    c = balanceWorkspace (current ss)
     r = drop (active ss+1)   $ workspaces ss
