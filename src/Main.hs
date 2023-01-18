@@ -29,7 +29,7 @@ main = do
                        .|. enterWindowMask
                        .|. substructureNotifyMask)
   autostart >> (print =<< queryTree dpy root) >> print "*********"
-  let ss = StackSet [Workspace Empty EndPath] 0 []
+  let ss = StackSet [Workspace Empty Nothing] 0 []
   let sd = SplitData 0.5 Horizontal
   loop dpy ss sd
 

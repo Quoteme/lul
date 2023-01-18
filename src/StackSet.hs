@@ -13,7 +13,7 @@ data StackSet a b = StackSet
 
 data Workspace a b = Workspace
   { windows :: Tree a b
-  , focused :: Path}
+  , focused :: Maybe Window}
   deriving (Show, Eq)
 
 data Path
