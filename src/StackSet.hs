@@ -8,6 +8,7 @@ import Text.Format (format)
 import Graphics.X11.Xlib.Extras
 import WindowDecoration
 import Data.Bifoldable
+import Data.Maybe (fromJust)
 
 data StackSet a b = StackSet
   { workspaces :: [Workspace a b]
@@ -31,9 +32,22 @@ handleNewWindows :: Display -> Window -> StackSet Window SplitData -> SplitData 
 handleNewWindows dpy root ss sd = do
   (_,_,children) <- queryTree dpy root
   let newwin = children \\ registeredWindows ss
+  mapM_ (\win -> do
+    selectInput dpy win (enterWindowMask)
+    return ()
+    ) newwin
   mapM_ (decorateWin dpy "black") newwin
   let newss  = foldl (`addToCurrentSS` sd) ss newwin
   return (newss {registeredWindows=registeredWindows ss ++ newwin})
+
+-- | set the focused window in the stackset
+handleFocusChange :: StackSet Window SplitData -> Window -> StackSet Window SplitData
+handleFocusChange ss win = ss { workspaces=l<>[c]<>r }
+  where
+    l = take (active ss-1) $ workspaces ss
+    c = Workspace (windows (workspaces ss !! active ss)) (Just win)
+    r = drop (active ss+1)   $ workspaces ss
+    
 
 -- | Given the display, its size as a rectangle and a Binary tree of
 -- windows and their data on how to split, show this on screen.
@@ -114,15 +128,13 @@ balanceCurrentSS ss = ss {workspaces=l<>[c]<>r}
     c = balanceWorkspace (current ss)
     r = drop (active ss+1)   $ workspaces ss
 
--- | decorate the windows in a stackset
--- This primarily changes the border color of the focused window to red
--- and the border color of the unfocused windows to black
-decorateStackSet :: Display -> StackSet Window SplitData -> IO (StackSet Window SplitData)
+decorateStackSet :: Display -> StackSet Window SplitData -> IO ()
 decorateStackSet dpy ss = do
-  (focused,_) <- getInputFocus dpy
-  putStrLn $ "focused: " ++ show focused
-  bimapM_ (\win -> case win == focused of
+  case focused (current ss) of
+    Just focusedWin -> do
+      putStrLn $ "focused: " ++ show focusedWin
+      bimapM_ (\win -> case win == focusedWin of
                      True  -> decorateWin dpy "red" win
                      False -> decorateWin dpy "black" win
-    ) (\_ -> return ()) (windows (current ss))
-  return ss
+        ) (\_ -> return ()) (windows (current ss))
+    Nothing  -> return ()

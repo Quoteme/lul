@@ -42,8 +42,6 @@ loop dpy ss sd = do
     -- sync dpy False
     nextEvent dpy e
     ev <- getEvent e
-    (focused,_) <- getInputFocus dpy
-    putStrLn $ format "Focused: {0}" [show focused]
     case (eventName ev) of{  
       "ButtonPress" -> do
         handleButtonPress =<< get_ButtonEvent e
@@ -68,6 +66,11 @@ loop dpy ss sd = do
         let closdeWindow = ev_window ev
         let newss = balanceCurrentSS $ removeFromCurrentSS ss closdeWindow
         apply dpy screenRect newss
+        return newss
+      ;
+      "EnterNotify" -> do
+        let newss = handleFocusChange ss (ev_window ev)
+        decorateStackSet dpy newss
         return newss
       ;
       _ -> do
