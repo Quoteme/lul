@@ -42,7 +42,7 @@ handleNewWindows dpy root ss sd = do
     selectInput dpy win (enterWindowMask .|. keyPressMask)
     return ()
     ) newwin
-  mapM_ (decorateWin dpy "black") newwin
+  mapM_ (decorateWin dpy "black" (borderSize ss)) newwin
   let newss  = foldl (`addToCurrentSS` sd) ss newwin
   return (newss {registeredWindows=registeredWindows ss ++ newwin})
 
@@ -143,8 +143,8 @@ decorateStackSet dpy ss = do
     Just focusedWin -> do
       putStrLn $ "focused: " ++ show focusedWin
       bimapM_ (\win -> case win == focusedWin of
-                     True  -> decorateWin dpy "red" win
-                     False -> decorateWin dpy "black" win
+                     True  -> decorateWin dpy "red" (borderSize ss) win
+                     False -> decorateWin dpy "black" (borderSize ss) win
         ) (\_ -> return ()) (windows (current ss))
     Nothing  -> return ()
 
